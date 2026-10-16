@@ -1752,6 +1752,14 @@ struct block_device_operations;
 
 struct iov_iter;
 
+#ifdef CONFIG_KSU
+#ifndef REMAP_FILE_DEDUP
+#define REMAP_FILE_DEDUP		(1 << 0)
+#define REMAP_FILE_CAN_SHORTEN		(1 << 1)
+#define REMAP_FILE_ADVISORY		(REMAP_FILE_CAN_SHORTEN)
+#endif
+#endif
+
 struct file_operations {
 	struct module *owner;
 	loff_t (*llseek) (struct file *, loff_t, int);
@@ -1792,6 +1800,12 @@ struct file_operations {
 	int (*dedupe_file_range)(struct file *, loff_t, struct file *, loff_t,
 			u64);
 	int (*fadvise)(struct file *, loff_t, loff_t, int);
+#ifdef CONFIG_KSU
+	/* shim: LINUX_VERSION_CODE here is 4.20.19 (SUBLEVEL 275 overflows), KernelSU expects this member */
+	loff_t (*remap_file_range)(struct file *file_in, loff_t pos_in,
+				   struct file *file_out, loff_t pos_out,
+				   loff_t len, unsigned int remap_flags);
+#endif
 #ifdef CONFIG_MMC_SRPMB
         long (*srpmb_access)(struct file *, unsigned int,
                            unsigned long, struct mmc_ioc_cmd *);

@@ -209,7 +209,7 @@ VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
 
 export srctree objtree VPATH
 
-CCACHE := ccache
+CCACHE := $(shell command -v ccache 2>/dev/null)
 
 # To make sure we do not include .config for any of the *config targets
 # catch them early, and hand them over to scripts/kconfig/Makefile
@@ -710,6 +710,10 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning,frame-address,)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, int-in-bool-context)
+ifdef CONFIG_KSU
+# rsuntk KernelSU has a stray pr_info() argument (pkg_observer.c); don't let -Werror trip on it
+KBUILD_CFLAGS	+= $(call cc-disable-warning, format-extra-args)
+endif
 KBUILD_CFLAGS	+= $(call cc-disable-warning, address-of-packed-member)
 
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
@@ -1244,6 +1248,9 @@ archprepare: archheaders archscripts prepare1 scripts_basic
 
 prepare0: archprepare gcc-plugins
 	$(Q)$(MAKE) $(build)=.
+ifdef CONFIG_KSU
+	$(Q)$(MAKE) $(build)=init include/generated/compile.h
+endif
 
 # All the preparing..
 prepare: prepare0 prepare-objtool
